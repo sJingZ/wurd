@@ -32,25 +32,35 @@ bool StudentTextEditor::load(std::string file) {
         // cerr << "Error: Cannot open" << file << "!" << endl;
         return false;
     }
+    fileContent.clear();
     std::string s;
-//    int index = 0;
     while(getline(infile,s)){
+        if (s[s.size() - 1] == '\r'){
+            s.erase(s.size()-1);
+        }
         fileContent.push_back(s);
-        
-//        fileContent[index] = s;
-//        fileContent.insert({index, s});
-//        index++;
     }
     currLine = fileContent.begin();
+    currRow= 0;
+    currCol = 0;
     return true; // TODO}
 }
 
 bool StudentTextEditor::save(std::string file) {
-	
-    return false;  // TODO
+    ofstream outfile(file);
+    if(!outfile){
+        return false;
+    }
+    list<string>::iterator it = fileContent.begin();
+    for(;it != fileContent.end();it++){
+        outfile << *it << endl;
+    }
+    return true;
+    // TODO
 }
 
 void StudentTextEditor::reset() {
+    fileContent.clear();
 	// TODO
 }
 
@@ -119,13 +129,14 @@ void StudentTextEditor::move(Dir dir) {
     // TODO
 }
 
+// delete current char
 void StudentTextEditor::del() {
-    if (currRow < fileContent.size()-1 &&
-        currCol < currLine->size()-1){
+    if (currRow <= fileContent.size()-1 &&
+        currCol <= currLine->size()-1){
         (*currLine) = currLine->substr(0, currCol) + currLine->substr(currCol+1);
     }
-    else if (currRow < fileContent.size()-1 &&
-             currCol == currLine->size()){
+    else if (currRow <= fileContent.size()-1 &&
+             currCol == currLine->size()){ //last char of each line
         list<string>::iterator nextLine = currLine;
         nextLine++;
         (*currLine) = *currLine + *(nextLine);
@@ -142,9 +153,11 @@ void StudentTextEditor::backspace() {
     else if(currCol == 0){
         list<string>::iterator prevLine = currLine;
         prevLine--;
+        currCol = prevLine->size();
         (*prevLine) = *prevLine + *currLine;
-        fileContent.remove(*currLine);
+        fileContent.erase(currLine);
         currLine = prevLine;
+        currRow--;
     }
 	// TODO
 }
