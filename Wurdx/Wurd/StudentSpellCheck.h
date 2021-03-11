@@ -15,11 +15,21 @@ public:
 	void spellCheckLine(const std::string& line, std::vector<Position>& problems);
 
 private:
-    struct TNode{
+    class TNode{
+    public:
         char value;
-        std::vector<TNode*> children;
+//        std::vector<TNode*> children;
+        TNode* children[27];
+        bool isEnd;
+        TNode(){
+            for (int i=0; i<27; i++){
+                children[i] = nullptr;
+            }
+            isEnd = false;
+        }
     };
     TNode* root;
+    void breakUpSentence(const std::string line, std::vector<SpellCheck::Position>& wordPos);
 };
 
 #endif  // STUDENTSPELLCHECK_H_

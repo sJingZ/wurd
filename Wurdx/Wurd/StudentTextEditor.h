@@ -32,6 +32,7 @@ private:
 //    std::vector<std::string> fileContent;
     std::list<std::string> fileContent;
     std::list<std::string>::iterator currLine;
+    bool undoCalled;
 };
 
 #endif // STUDENTTEXTEDITOR_H_

@@ -17,6 +17,7 @@ StudentTextEditor::StudentTextEditor(Undo* undo)
  : TextEditor(undo) {
      currRow = 0;
      currCol = 0;
+     undoCalled = false;
      // TODO
 }
 
@@ -32,25 +33,35 @@ bool StudentTextEditor::load(std::string file) {
         // cerr << "Error: Cannot open" << file << "!" << endl;
         return false;
     }
+    fileContent.clear();
     std::string s;
-//    int index = 0;
     while(getline(infile,s)){
+        if (s[s.size() - 1] == '\r'){
+            s.erase(s.size()-1);
+        }
         fileContent.push_back(s);
-        
-//        fileContent[index] = s;
-//        fileContent.insert({index, s});
-//        index++;
     }
     currLine = fileContent.begin();
+    currRow= 0;
+    currCol = 0;
     return true; // TODO}
 }
 
 bool StudentTextEditor::save(std::string file) {
-	
-    return false;  // TODO
+    ofstream outfile(file);
+    if(!outfile){
+        return false;
+    }
+    list<string>::iterator it = fileContent.begin();
+    for(;it != fileContent.end();it++){
+        outfile << *it << endl;
+    }
+    return true;
+    // TODO
 }
 
 void StudentTextEditor::reset() {
+    fileContent.clear();
 	// TODO
 }
 
@@ -119,13 +130,16 @@ void StudentTextEditor::move(Dir dir) {
     // TODO
 }
 
+// delete current char
 void StudentTextEditor::del() {
-    if (currRow < fileContent.size()-1 &&
-        currCol < currLine->size()-1){
+    if (currRow <= fileContent.size()-1 &&
+        currCol <= currLine->size()-1){
+        char temp = (*currLine)[currCol];
         (*currLine) = currLine->substr(0, currCol) + currLine->substr(currCol+1);
+        if(!undoCalled){getUndo()->submit(Undo::Action::DELETE, currRow, currCol, temp);}
     }
     else if (currRow < fileContent.size()-1 &&
-             currCol == currLine->size()){
+             currCol == currLine->size()){ //last char of each line
         list<string>::iterator nextLine = currLine;
         nextLine++;
         (*currLine) = *currLine + *(nextLine);
@@ -136,15 +150,20 @@ void StudentTextEditor::del() {
 
 void StudentTextEditor::backspace() {
     if (currCol > 0){
+        char temp = (*currLine)[currCol-1];
         (*currLine) = currLine->substr(0, currCol-1) + currLine->substr(currCol);
         currCol--;
+        if(!undoCalled){getUndo()->submit(Undo::Action::DELETE, currRow, currCol, temp);}
     }
-    else if(currCol == 0){
+    else if(currCol == 0 &&
+            currRow > 0){ // first char of line
         list<string>::iterator prevLine = currLine;
         prevLine--;
+        currCol = prevLine->size();
         (*prevLine) = *prevLine + *currLine;
-        fileContent.remove(*currLine);
+        fileContent.erase(currLine);
         currLine = prevLine;
+        currRow--;
     }
 	// TODO
 }
@@ -153,13 +172,15 @@ void StudentTextEditor::insert(char ch) {
     if (ch == '\t'){
         currLine->insert(currCol,"    ");
         currCol+=4;
-        return;
     }
     else{
         currLine->insert(currCol, 1, ch);
         currCol++;
-        return;
     }
+    if(!undoCalled){
+        getUndo()->submit(Undo::Action::INSERT, currRow, currCol, ch);
+    }
+    return;
 }
 
 void StudentTextEditor::enter() {
@@ -188,6 +209,9 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
     lines.clear();
     list<string>::iterator temp;
     temp = currLine;
+    
+    
+    //// Do we need to check for the case where startRow is below currRow?
     int traverseRow = currRow < startRow? startRow - currRow: currRow - startRow;
     for (int k=0; k < traverseRow; k++){
         temp--;
@@ -201,5 +225,50 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
 }
 
 void StudentTextEditor::undo() {
+    int R = -100;
+    int C = -100;
+    int count = 0;
+    string text = "";
+    undoCalled = true;
+    switch (getUndo()->get(R, C, count, text)) {
+        case Undo::Action::INSERT:{
+            if (R > currRow){
+                for (int i=0; i<R-currRow; i++){currLine++;}
+            }
+            else{
+                for(int i=0; i < currRow - R; i++){currLine--;}
+            }
+            currCol = C;
+            currRow = R;
+            currLine->insert(currCol, text);
+//            for(int i=0;i<count;i++){
+//                insert(text[i]);
+//            }
+            break;
+        }
+        case Undo::Action::DELETE:{
+            if (R > currRow){
+                for (int i=0; i<R-currRow; i++){
+                    currLine++;
+                }
+            }
+            else{
+                for(int i=0; i < currRow - R; i++){
+                    currLine--;
+                }
+            }
+            currCol = C;
+            currRow = R;
+            if(text[0] == '\t'){
+                for (int i=0; i < count*4; i++) {backspace();}
+            }
+            else{
+                for(int i=0;i<count;i++){backspace();}
+            }
+        }
+        default:
+            break;
+    }
+    undoCalled = false;
 	// TODO
 }
