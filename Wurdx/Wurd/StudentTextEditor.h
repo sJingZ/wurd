@@ -28,10 +28,9 @@ public:
 private:
     int currRow;
     int currCol;
-//    std::map<int, std::string> fileContent;
-//    std::vector<std::string> fileContent;
     std::list<std::string> fileContent;
     std::list<std::string>::iterator currLine;
+    bool undoCalled;
 };
 
 #endif // STUDENTTEXTEDITOR_H_

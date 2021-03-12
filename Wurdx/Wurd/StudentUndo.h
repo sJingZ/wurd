@@ -2,6 +2,7 @@
 #define STUDENTUNDO_H_
 
 #include "Undo.h"
+#include <stack>
 
 class StudentUndo : public Undo {
 public:
@@ -11,7 +12,15 @@ public:
 	void clear();
 
 private:
-
+    struct EDIT{
+        Action act;
+        int r;
+        int c;
+        std::string value;
+        bool isBatched;
+        int count;
+    };
+    std::stack<EDIT*> editStack;
 };
 
 #endif // STUDENTUNDO_H_

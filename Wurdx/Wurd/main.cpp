@@ -32,7 +32,7 @@ bool neededToRelaunchAndDid() {
 		"  repeat until T is not busy\n"
 		"    delay 2\n"
 		"  end repeat\n"
-		"  delay 1\n"  // change this to a larger number of seconds if you want to keep the window open longer
+		"  delay 10\n"  // change this to a larger number of seconds if you want to keep the window open longer
 		"  close window id W\n"
 		"end tell\nEND_END_END\n");
 	std::cout << "Terminal window ended with exit code: " << status << std::endl;
